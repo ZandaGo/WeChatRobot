@@ -6,6 +6,9 @@ import time
 import xml.etree.ElementTree as ET
 from queue import Empty
 from threading import Thread
+
+from IPython.core.events import pre_run_cell
+
 from base.func_zhipu import ZhiPu
 
 from wcferry import Wcf, WxMsg
@@ -22,6 +25,7 @@ from constants import ChatType
 from job_mgmt import Job
 
 import img_ocr
+from datetime import datetime
 
 __version__ = "39.2.4.0"
 
@@ -340,7 +344,9 @@ class Robot(Job):
             "十殿八": "static\\shidian8.jpg",
             "鱼珠技能": "static\\yuzhujineng.jpg",
             "鱼珠属性": "static\\yuzhushuxing.jpg",
-            "鱼珠技能搭配": "static\\yuzhujinengdapei.jpg"
+            "鱼珠技能搭配": "static\\yuzhujinengdapei.jpg",
+            "帮助": "static\\bangzhu.jpg",
+            "菜单": "static\\bangzhu.jpg"
         }
 
         # 检查消息内容是否在字典中
@@ -370,4 +376,37 @@ class Robot(Job):
             )
             return True
 
+        if msg.content == "到期时间":
+            rsp_msg = self.remain_time(self.config.GROUPS_EXPIRE_TIME[msg.roomid])
+            self.sendTextMsg(rsp_msg, msg.roomid, msg.sender)
+            return True
+
+        if msg.content == "价格":
+            rsp_msg = "请给小乖留言详谈"
+            self.sendTextMsg(rsp_msg, msg.roomid, msg.sender)
+            return True
+
         return False
+
+    def remain_time(self, expiry_date_str):
+        # 设置到期时间
+        expiry_date = datetime.strptime(expiry_date_str, '%Y%m%d')
+
+        # 获取当前时间
+        current_time = datetime.now()
+
+        # 计算时间差
+        time_difference = expiry_date - current_time
+
+        # 提取天数、小时、分钟和秒数
+        days = time_difference.days
+        seconds = time_difference.seconds
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        seconds = seconds % 60
+
+        # 格式化到期时间
+        expiry_date_formatted = expiry_date.strftime('%Y年%m月%d日')
+
+        # 返回结果
+        return f"到期时间:\n{expiry_date_formatted}，还剩余 【{days}天{hours}小时{minutes}分{seconds}秒】小乖就要离开大大了...[流泪][流泪]"
