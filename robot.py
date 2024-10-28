@@ -115,17 +115,18 @@ class Robot(Job):
     def toChitchat(self, msg: WxMsg) -> bool:
         """闲聊，接入 ChatGPT
         """
-        if not self.chat:  # 没接 ChatGPT，固定回复
-            rsp = "我是机器人，请不要@我"
-        else:  # 接了 ChatGPT，智能回复
-            q = re.sub(r"@.*?[\u2005|\s]", "", msg.content).replace(" ", "")
-            rsp = self.chat.get_answer(q, (msg.roomid if msg.from_group() else msg.sender))
-
+        rsp = "我是机器人，请不要@我"
+        # if not self.chat:  # 没接 ChatGPT，固定回复
+        #     rsp = "我是机器人，请不要@我"
+        # else:  # 接了 ChatGPT，智能回复
+        #     q = re.sub(r"@.*?[\u2005|\s]", "", msg.content).replace(" ", "")
+        #     rsp = self.chat.get_answer(q, (msg.roomid if msg.from_group() else msg.sender))
+        #
         if rsp:
             if msg.from_group():
                 self.sendTextMsg(rsp, msg.roomid, msg.sender)
-            else:
-                self.sendTextMsg(rsp, msg.sender)
+            # else:
+            #     self.sendTextMsg(rsp, msg.sender)
 
             return True
         else:
@@ -270,29 +271,103 @@ class Robot(Job):
             self.sendTextMsg(news, r)
 
     def toImageChat(self, msg: WxMsg) -> bool:
-        """自定义回复
-        """
-        # print("content: ", msg.content)
-        # print("id: {}", msg.id)
-        # print("extra: ", msg.extra)
+        """自定义回复"""
         img_path = "D:\\code\\WeChatRobot\\image\\"
-        # if msg.extra == "":
-        #     rsp_msg = "这是一段文字消息\n小乖学舌:\n{}".format(msg.content)
-        #     self.sendTextMsg(rsp_msg, msg.roomid, msg.sender)
+
+        # 处理图片 OCR 的逻辑
         if msg.extra.endswith(".dat"):
             extra_id = msg.extra.split('/')[-1].split('.dat')[0]
-            # 下载图片
             self.wcf.download_image(msg.id, msg.extra, img_path)
-            # 图片base64加密
             img_base_64 = img_ocr.image_to_base64(img_path + extra_id + ".jpg")
-            # ocr分析图片并返回结果
             secretid = self.config.AKSK.get("secretid")
             secretkey = self.config.AKSK.get("secretkey")
             response = img_ocr.perform_ocr(secretid, secretkey, img_base_64)
             rsp_msg = img_ocr.process_response(response)
             if rsp_msg is not None:
-                # 返回消息
                 self.sendTextMsg(rsp_msg, msg.roomid, msg.sender)
-
-        else:
             return True
+
+        # 一些固定内容的查询
+        image_map = {
+            "排位预测": "static\\paiweiyuce.jpg",
+            "排位对战": "static\\paiweiyuce.jpg",
+            "进阶图": "static\\jinjietu.jpg",
+            "玩具扳手": "static\\wanjubanshou.jpg",
+            "玩具精铁": "static\\wanjujingtie.jpg",
+            "消耗档位": "static\\xiaohaodangwei.jpg",
+            "vip对照表": "static\\vipduizhaobiao.jpg",
+            "蓝色水晶": "static\\lanseshuijing.jpg",
+            "紫色水晶": "static\\ziseshuijing.jpg",
+            "橙色水晶": "static\\chengseshuijing.jpg",
+            "红色水晶": "static\\hongseshuijing.jpg",
+            "金色水晶": "static\\jinseshuijing.jpg",
+            "水晶升级表": "static\\shuijingshengjibiao.jpg",
+            "水晶升级金砖": "static\\shuijingshengjijinzhuan.jpg",
+            "boss血量": "static\\bossxueliang.jpg",
+            "boss击杀": "static\\bossjisha.jpg",
+            "咸王顺序": "static\\xianwangshunxu.jpg",
+            "洗练属性上限": "static\\xilianshuxingshangxian.jpg",
+            "洗练计算公式": "static\\xilianjisuangongshi.jpg",
+            "俱乐部人数": "static\\juleburenshu.jpg",
+            "科技统计": "static\\kejitongji.jpg",
+            "武将金币": "static\\wujiangjinbi.jpg",
+            "武将进阶石": "static\\wujiangjinjieshi.jpg",
+            "武将升星": "static\\wujiangshengxing.jpg",
+            "武将满级速度": "static\\wujiangmanjisudu.jpg",
+            "主公金币": "static\\zhugongjinbi.jpg",
+            "主公进阶石": "static\\zhugongjinjieshi.jpg",
+            "灯神奖励": "static\\dengshenjiangli.jpg",
+            "灯神礼包": "static\\dengshenlibao.jpg",
+            "零氪资源": "static\\lingkeziyuan.jpg",
+            "终身通行证资源": "static\\zhongshentongxingzhengziyuan.jpg",
+            "氪满资源": "static\\kemanziyuan.jpg",
+            "梦境商店": "static\\mengjingshangdian.jpg",
+            "十殿1": "static\\shidian1.jpg",
+            "十殿一": "static\\shidian1.jpg",
+            "十殿2": "static\\shidian2.jpg",
+            "十殿二": "static\\shidian2.jpg",
+            "十殿3": "static\\shidian3.jpg",
+            "十殿三": "static\\shidian3.jpg",
+            "十殿4": "static\\shidian4.jpg",
+            "十殿四": "static\\shidian4.jpg",
+            "十殿5": "static\\shidian5.jpg",
+            "十殿五": "static\\shidian5.jpg",
+            "十殿6": "static\\shidian6.jpg",
+            "十殿六": "static\\shidian6.jpg",
+            "十殿7": "static\\shidian7.jpg",
+            "十殿七": "static\\shidian7.jpg",
+            "十殿8": "static\\shidian8.jpg",
+            "十殿八": "static\\shidian8.jpg",
+            "鱼珠技能": "static\\yuzhujineng.jpg",
+            "鱼珠属性": "static\\yuzhushuxing.jpg",
+            "鱼珠技能搭配": "static\\yuzhujinengdapei.jpg"
+        }
+
+        # 检查消息内容是否在字典中
+        if msg.content in image_map:
+            self.wcf.send_image(img_path + image_map[msg.content], msg.roomid)
+            return True
+
+        # 处理兑换码的逻辑
+        if msg.content == "兑换码":
+            self.sendTextMsg(
+                "VIP666\n"
+                "vip666\n"
+                "XY888\n"
+                "taptap666\n"
+                "QQXY888\n"
+                "happy666\n"
+                "HAPPY666\n"
+                "xyzwgame666\n"
+                "huhushengwei888\n"
+                "app666\n"
+                "APP666\n"
+                "douyin666\n"
+                "douyin888\n"
+                "douyin777",
+                msg.roomid,
+                msg.sender
+            )
+            return True
+
+        return False
